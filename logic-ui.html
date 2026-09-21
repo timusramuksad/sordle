@@ -130,7 +130,7 @@
   </head>
   <body>
     <div class="card">
-      <h1>Wordle Logic</h1>
+      <h1>Sordle</h1>
       <div class="row">
         <input id="guessInput" type="text" maxlength="5" placeholder="Enter guess" />
         <button id="submitBtn" type="button">Submit</button>
@@ -141,7 +141,7 @@
     </div>
 
     <script>
-      let target = 'saint';
+      let target = await generateTargetWord();
       const maxGuesses = 5;
       const attempts = [];
 
