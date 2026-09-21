@@ -141,8 +141,7 @@
     </div>
 
     <script>
-      //let target = 'saint';
-      startNewGame();
+      let target;
       const maxGuesses = 5;
       const attempts = [];
 
@@ -314,8 +313,7 @@
         if (event.key === 'Enter') submitGuess();
       });
 
-      guessInput.focus();
-      message.textContent = `Guess 1/${maxGuesses}`;
+      startNewGame();
     </script>
   </body>
 </html>
