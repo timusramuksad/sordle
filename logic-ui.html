@@ -23,6 +23,7 @@
         min-height: 100vh;
         display: grid;
         place-items: center;
+        position: relative;
         background: var(--bg);
         color: var(--text);
         font-family: Arial, sans-serif;
@@ -69,6 +70,15 @@
         color: white;
         font-weight: 700;
         cursor: pointer;
+      }
+
+      .new-word {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        padding: 8px 10px;
+        font-size: 0.8rem;
+        background: #2d6cdf;
       }
 
       button:disabled {
@@ -125,17 +135,19 @@
         <input id="guessInput" type="text" maxlength="5" placeholder="Enter guess" />
         <button id="submitBtn" type="button">Submit</button>
       </div>
+      <button id="newWordBtn" class="new-word" type="button" disabled>New word</button>
       <div id="statusBox" class="status-box"></div>
       <div id="message" class="message"></div>
     </div>
 
     <script>
-      const target = 'saint';
+      let target = 'saint';
       const maxGuesses = 5;
       const attempts = [];
 
       const guessInput = document.getElementById('guessInput');
       const submitBtn = document.getElementById('submitBtn');
+      const newWordBtn = document.getElementById('newWordBtn');
       const statusBox = document.getElementById('statusBox');
       const message = document.getElementById('message');
 
@@ -182,6 +194,46 @@
           return false;
         } finally {
           clearTimeout(timeout);
+        }
+      }
+
+      async function generateTargetWord() {
+        const response = await fetch('https://api.datamuse.com/words?sp=?????&max=1000');
+        if (!response.ok) throw new Error('Could not load new words');
+
+        const words = await response.json();
+        const candidates = words
+          .map((entry) => entry.word?.toLowerCase())
+          .filter((word) => /^[a-z]{5}$/.test(word));
+
+        if (!candidates.length) throw new Error('No five-letter words found');
+        return candidates[Math.floor(Math.random() * candidates.length)];
+      }
+
+      function resetGame() {
+        attempts.length = 0;
+        renderAttempts();
+        guessInput.value = '';
+        guessInput.disabled = false;
+        submitBtn.disabled = false;
+        newWordBtn.disabled = true;
+        message.textContent = `Guess 1/${maxGuesses}`;
+        guessInput.focus();
+      }
+
+      async function startNewGame() {
+        newWordBtn.disabled = true;
+        submitBtn.disabled = true;
+        message.textContent = 'Generating a new word...';
+
+        try {
+          target = await generateTargetWord();
+          resetGame();
+        } catch (error) {
+          console.error('New word request failed:', error);
+          submitBtn.disabled = false;
+          newWordBtn.disabled = false;
+          message.textContent = 'Could not generate a new word. Try again.';
         }
       }
 
@@ -237,6 +289,7 @@
           message.textContent = 'You won!';
           submitBtn.disabled = true;
           guessInput.disabled = true;
+          newWordBtn.disabled = false;
           guessInput.value = '';
           return;
         }
@@ -245,6 +298,7 @@
           message.textContent = `Out of guesses! Target was: ${target.toUpperCase()}`;
           submitBtn.disabled = true;
           guessInput.disabled = true;
+          newWordBtn.disabled = false;
           guessInput.value = '';
           return;
         }
@@ -254,6 +308,7 @@
       }
 
       submitBtn.addEventListener('click', submitGuess);
+      newWordBtn.addEventListener('click', startNewGame);
       guessInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') submitGuess();
       });
